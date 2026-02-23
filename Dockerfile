@@ -46,6 +46,7 @@ RUN apt-get install -y \
 #============================
 RUN apt-get update
 RUN apt-get install -y \
+    libasound2t64 \
     libatk1.0-0 \
     libatspi2.0-0 \
     libdbus-1-3 \
@@ -75,14 +76,6 @@ RUN apt-get -qy --no-install-recommends install \
     vim \
     wget \
     xvfb
-
-#================
-# Install Chrome
-#================
-RUN apt-get update
-RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-RUN apt-get install -y ./google-chrome-stable_current_amd64.deb
-RUN rm ./google-chrome-stable_current_amd64.deb
 
 #================
 # Install Python
@@ -127,12 +120,19 @@ RUN cd /SeleniumBase && ls && pip install -r requirements.txt --upgrade
 RUN cd /SeleniumBase && pip install .
 RUN pip install pyautogui
 RUN pip install playwright
-RUN seleniumbase get chromium
 
-#=======================
-# Download chromedriver
-#=======================
-RUN seleniumbase get chromedriver --path
+#======================================
+# Download CfT + chromedriver
+# CfT supports --load-extension unlike
+# branded Chrome 137+
+#======================================
+RUN seleniumbase get cft
+# Symlink CfT binary so find_chrome_executable() and UC mode discover it
+RUN CHROME_PATH=$(find /usr/local/lib -name "chrome" -path "*/cft_drivers/*" -type f 2>/dev/null | head -1) && \
+    ln -sf "$CHROME_PATH" /usr/local/bin/google-chrome
+# Get chromedriver matching CfT version (auto-detects from CfT JSON API for >= 115)
+RUN CFT_MAJOR=$(google-chrome --version | grep -oP '\d+' | head -1) && \
+    seleniumbase get chromedriver "$CFT_MAJOR" --path
 
 #==========================================
 # Create entrypoint and grab example tests
@@ -140,5 +140,13 @@ RUN seleniumbase get chromedriver --path
 COPY integrations/docker/docker-entrypoint.sh /
 COPY integrations/docker/run_docker_test_in_chrome.sh /
 RUN chmod +x *.sh
+
+#==============================
+# Custom test code + rrweb ext
+#==============================
+COPY src/ /app/src/
+COPY extensions/ /app/extensions/
+
+WORKDIR /app
 ENTRYPOINT ["/docker-entrypoint.sh"]
-CMD ["/bin/bash"]
+CMD ["sh", "-c", "Xvfb :99 -screen 0 1920x1080x24 -ac &>/dev/null & sleep infinity"]

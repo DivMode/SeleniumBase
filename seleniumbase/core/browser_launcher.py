@@ -2780,7 +2780,10 @@ def _set_chrome_options(
     included_disabled_features.append("PrivacySandboxSettings4")
     included_disabled_features.append("SidePanelPinning")
     included_disabled_features.append("UserAgentClientHint")
-    included_disabled_features.append("DisableLoadExtensionCommandLineSwitch")
+    if not extension_dir:
+        included_disabled_features.append(
+            "DisableLoadExtensionCommandLineSwitch"
+        )
     included_disabled_features.append("Bluetooth")
     included_disabled_features.append("WebBluetooth")
     included_disabled_features.append("UnifiedWebBluetooth")
@@ -4862,9 +4865,10 @@ def get_local_driver(
         included_disabled_features.append("PrivacySandboxSettings4")
         included_disabled_features.append("SidePanelPinning")
         included_disabled_features.append("UserAgentClientHint")
-        included_disabled_features.append(
-            "DisableLoadExtensionCommandLineSwitch"
-        )
+        if not extension_dir:
+            included_disabled_features.append(
+                "DisableLoadExtensionCommandLineSwitch"
+            )
         included_disabled_features.append("Bluetooth")
         included_disabled_features.append("WebBluetooth")
         included_disabled_features.append("UnifiedWebBluetooth")

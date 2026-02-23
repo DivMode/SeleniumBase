@@ -258,16 +258,20 @@ class Config:
         # By the time it starts, the port is probably already taken.
         args = self._default_browser_args.copy()
         args += ["--user-data-dir=%s" % self.user_data_dir]
-        args += [
-            "--disable-features=IsolateOrigins,site-per-process,Translate,"
+        _disable_features = (
+            "IsolateOrigins,site-per-process,Translate,"
             "InsecureDownloadWarnings,DownloadBubble,DownloadBubbleV2,"
             "OptimizationTargetPrediction,OptimizationGuideModelDownloading,"
             "SidePanelPinning,UserAgentClientHint,PrivacySandboxSettings4,"
             "OptimizationHintsFetching,InterestFeedContentSuggestions,"
             "Bluetooth,WebBluetooth,UnifiedWebBluetooth,ComponentUpdater,"
-            "DisableLoadExtensionCommandLineSwitch,"
+            "{ext_switch}"
             "WebAuthentication,PasskeyAuth"
-        ]
+        ).format(
+            ext_switch="" if (self.extension_dir or self._extensions)
+            else "DisableLoadExtensionCommandLineSwitch,"
+        )
+        args += ["--disable-features=%s" % _disable_features]
         if self.expert:
             args += [
                 "--disable-web-security",
